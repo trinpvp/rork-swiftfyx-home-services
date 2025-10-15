@@ -59,11 +59,14 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const signIn = async (email: string, password: string): Promise<boolean> => {
     try {
       const users = await getAllUsers();
+      const trimmedEmail = email.trim().toLowerCase();
+      const trimmedPassword = password.trim();
+      
       console.log('All users in database:', users.map(u => ({ email: u.email, id: u.id })));
-      console.log('Looking for user with email:', email);
+      console.log('Looking for user with email:', trimmedEmail);
       
       const foundUser = users.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+        (u) => u.email.trim().toLowerCase() === trimmedEmail && u.password.trim() === trimmedPassword
       );
 
       if (foundUser) {
@@ -73,6 +76,7 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
         return true;
       }
       console.log('User not found or password incorrect');
+      console.log('Tried email:', trimmedEmail, 'password length:', trimmedPassword.length);
       return false;
     } catch (error) {
       console.error('Error signing in:', error);
@@ -88,27 +92,28 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   ): Promise<boolean> => {
     try {
       const users = await getAllUsers();
+      const trimmedEmail = email.trim().toLowerCase();
       
       const existingUser = users.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase()
+        (u) => u.email.trim().toLowerCase() === trimmedEmail
       );
       if (existingUser) {
-        console.log('User already exists with email:', email);
+        console.log('User already exists with email:', trimmedEmail);
         return false;
       }
 
       const newUser: User = {
         id: Date.now().toString(),
-        name,
-        email,
-        phone,
-        password,
+        name: name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        password: password.trim(),
       };
 
-      console.log('Creating new user:', { email: newUser.email, id: newUser.id });
+      console.log('Creating new user:', { email: newUser.email, id: newUser.id, passwordLength: newUser.password.length });
       users.push(newUser);
       await saveUsers(users);
-      console.log('User saved successfully');
+      console.log('User saved successfully. Total users:', users.length);
       
       setUser(newUser);
       await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
